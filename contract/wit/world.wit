@@ -1,0 +1,69 @@
+/// z-tenant-ar WIT world — accounts-receivable reminder agent.
+///
+/// Imports required host capabilities:
+///   - tenant-context:         tenant DID, cluster timestamp (overdue checks)
+///   - logging:                info / error lines
+///   - kv-store:               `invoices` map (records) + `secrets` map
+///                             (email endpoint + API key)
+///   - http-with-placeholders: reminder EMAIL delivery — the body carries
+///                             `{{profile.<field>}}` markers the host resolves
+///                             from the calling user's profile at dispatch
+///                             time, so the customer's name and email address
+///                             never enter WASM memory.
+///
+/// Deliberately does NOT import plain `http`: every outbound call this
+/// contract makes carries customer PII markers, so the placeholder interface
+/// is the entire egress surface.
+///
+/// Invoice records hold business data only (id, amount, currency, due date,
+/// status). The input structs use `deny_unknown_fields`, so a payload that
+/// tries to smuggle customer PII (name, email) into an invoice is rejected
+/// at parse time.
+package z:tenant-ar@0.1.0;
+
+world tenant-ar {
+    import host:tenant/tenant-context@1.0.0;
+    import host:interfaces/logging@2.1.0;
+    import host:interfaces/kv-store@2.1.0;
+    import host:interfaces/http-with-placeholders@2.1.0;
+
+    export contracts;
+}
+
+interface contracts {
+    /// Standard 3-field envelope used by all contracts callable from the node.
+    /// `input`        — JSON-serialized request payload specific to the function.
+    /// `user-profile` — always None for tenant contracts (hardcoded at dispatch).
+    /// `context`      — JSON-serialized DynamicContext (node-minted, trusted).
+    record generic-input {
+        input:        option<list<u8>>,
+        user-profile: option<list<u8>>,
+        context:      option<list<u8>>,
+    }
+
+    /// Create or update an invoice record in the `invoices` KV map.
+    /// Input  (JSON): { invoice_id, customer_ref, amount, currency, due_date, status? }
+    ///   - amount is a decimal string ("1250.00"), currency a 3-letter code,
+    ///     due_date is YYYY-MM-DD, status one of open|paid|void (default open).
+    ///   - customer_ref is an opaque business reference (PO / account number),
+    ///     NOT a name or email — unknown fields are rejected.
+    /// Output (JSON): { invoice_id, created: bool }
+    upsert-invoice: func(req: generic-input) -> result<list<u8>, string>;
+
+    /// List invoice records, optionally filtered.
+    /// Input  (JSON): { filter? }  — "all" (default) | "open" | "overdue"
+    ///   "overdue" = status open AND due_date before the cluster timestamp's
+    ///   current UTC date.
+    /// Output (JSON): { invoices: [record], as_of_epoch_secs }
+    list-invoices: func(req: generic-input) -> result<list<u8>, string>;
+
+    /// Send a payment-reminder email for one open invoice. Carries NO
+    /// customer PII: the contract templates `{{profile.first_name}}` and
+    /// `{{profile.verified_contacts.email.value}}` markers into the email
+    /// payload and the host resolves them from the calling user's profile
+    /// via http-with-placeholders. Refuses paid/void invoices and repeats
+    /// within the 20h cooldown, so a double-fired cron cannot spam.
+    /// Input  (JSON): { invoice_id }
+    /// Output (JSON): { invoice_id, email_status, reminder_count }
+    send-reminder: func(req: generic-input) -> result<list<u8>, string>;
+}

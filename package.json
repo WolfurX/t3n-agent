@@ -1,0 +1,15 @@
+{
+  "name": "t3n-agent",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "type": "module",
+  "dependencies": {
+    "@terminal3/t3n-sdk": "^5.1.0",
+    "tsx": "^4.23.12"
+  }
+}
