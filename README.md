@@ -41,6 +41,17 @@ npx tsx src/agent.ts run   # remind every overdue invoice, cooldown-safe
 
 Verified against T3N testnet 2026-08-26: contract id 724, reminder delivered with both placeholders resolved host-side, cooldown refusal on the second attempt.
 
+![demo run](docs/img/demo-run.png)
+
 ## Identity note
 
-Metered calls are charged to the calling identity's own T3N balance. A fresh agent DID starts at zero and there is currently no self-serve top-up for agents, so until the agent DID is funded (via Terminal 3 devrel) the demo runs the CLI as the tenant identity with a tenant-signed self-grant. `agent.ts` picks up whichever key `AGENT_KEY` holds; the flow is identical once a funded agent key is dropped in.
+Metered calls are charged to the calling identity's own T3N balance. The agent runs under its own funded DID (`did:t3n:b886...`) for `add`, `list` and `run`. The `send-reminder` egress step currently only succeeds as a data-owner self-call: on today's testnet, egress grants resolve from the caller's own grant record only, and there is no documented way for an agent to bind the granting user's context for `{{profile.*}}` resolution. Details, repro table and request ids in [docs/BUGS.md](docs/BUGS.md); question open with Terminal 3 devrel. `agent.ts` picks up whichever key `AGENT_KEY` holds, so the moment delegated calls work, the same CLI covers the full flow.
+
+## Maintenance
+
+Built to keep running after the challenge with near-zero attention:
+
+- `setup.ts` is idempotent; re-deploying a new contract version is `cargo build` + `setup.ts <higher-version>`.
+- `agent.ts run` is the whole operational surface: one cron line (`npx tsx src/agent.ts run`), safe on any schedule because the 20h cooldown lives in the contract, not the scheduler.
+- No database and no server; all state is in the tenant's KV maps on T3N. The repo's only secrets are in the untracked `.env`.
+- Swapping the demo webhook for a real gateway (e.g. Resend) is a `.env` change (`EMAIL_ENDPOINT`, `EMAIL_API_KEY`), no code.
