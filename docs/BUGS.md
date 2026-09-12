@@ -1,6 +1,6 @@
 # Bugs and doc gaps hit while building (T3N testnet, 2026-08-26)
 
-Environment: `@terminal3/t3n-sdk` latest from npm, Node 26.7, `setEnvironment("testnet")`. Tenant `did:t3n:9bf3f3a0784618303036e51800ce256a444dae81`, agent `did:t3n:b8863731a9a309ee604bef51c4a39222ccb61836`, contract `z:9bf3f3a0...:ar` (id 724). Request ids included so you can pull server logs.
+Environment: `@terminal3/t3n-sdk` 5.1.0 at the time (re-verified on 5.2.0, 2026-09-12), Node 26.7, `setEnvironment("testnet")`. Tenant `did:t3n:9bf3f3a0784618303036e51800ce256a444dae81`, agent `did:t3n:b8863731a9a309ee604bef51c4a39222ccb61836`, contract `z:9bf3f3a0...:ar` (id 724). Request ids included so you can pull server logs.
 
 ## 1. Agent-signed calls never see the data owner's egress grant
 

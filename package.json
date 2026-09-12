@@ -9,7 +9,7 @@
   "keywords": [],
   "type": "module",
   "dependencies": {
-    "@terminal3/t3n-sdk": "^5.1.0",
+    "@terminal3/t3n-sdk": "5.2.0",
     "tsx": "^4.23.12"
   }
 }

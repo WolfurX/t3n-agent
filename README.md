@@ -39,7 +39,7 @@ npx tsx src/agent.ts remind INV-2026-001
 npx tsx src/agent.ts run   # remind every overdue invoice, cooldown-safe
 ```
 
-Verified against T3N testnet 2026-08-26: contract id 724, reminder delivered with both placeholders resolved host-side, cooldown refusal on the second attempt.
+Verified against T3N testnet 2026-08-26: contract id 724, reminder delivered with both placeholders resolved host-side, cooldown refusal on the second attempt. Re-verified 2026-09-12 on `@terminal3/t3n-sdk` 5.2.0 (now pinned exact, the version Terminal 3 asked entrants to use): list, reminder delivery (HTTP 200, placeholders resolved) and the cooldown skip in `run` all unchanged.
 
 ![demo run](docs/img/demo-run.png)
 
